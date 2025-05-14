@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title> Ghuy Rắn Săn Mồi</title>
+<title>Ghuy Game</title>
   <style>
     body {
       margin: 0;
@@ -77,8 +77,19 @@
     <button id="menuBtn" onclick="backToMenu()">Quay về menu</button>
   </div>
 
-  <audio id="eatSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
-  <audio id="gameOverSound" src="https://www.soundjay.com/button/beep-10.wav" preload="auto"></audio>
+  function startGame() {
+  // Phát âm thanh để vượt qua chặn của trình duyệt
+  eatSound.play().catch(() => {});
+  gameOverSound.play().catch(() => {});
+
+  menu.style.display = 'none';
+  gameDiv.style.display = 'block';
+  initGame();
+}
+
+<audio id="eatSound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-casino-notification-211.wav" preload="auto"></audio>
+<audio id="gameOverSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.wav" preload="auto"></audio>
+
 
   <script>
     const canvas = document.getElementById("game");
