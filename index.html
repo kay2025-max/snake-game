@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ghuy Game</title>
+  <title>Ghuy Game</title>
   <style>
     body {
       margin: 0;
@@ -42,14 +42,6 @@
       box-shadow: 0 0 20px rgba(0,255,0,0.5);
     }
     #restartBtn, #menuBtn { display: none; }
-    #scoreBoard {
-      margin-bottom: 10px;
-    }
-    #scoreBoard p {
-      margin: 5px 0;
-      font-size: 16px;
-      color: #0f0;
-    }
   </style>
 </head>
 <body>
@@ -67,29 +59,15 @@
 
   <!-- Game -->
   <div class="game-container" id="gameSection" style="display: none">
-    <h2>🐍 Rắn Săn Mồi 🐍</h2>
-    <div id="scoreBoard">
-      <p id="currentScore">Điểm: 0</p>
-      <p id="highScore">Kỷ lục: 0</p>
-    </div>
+    <h2>🐍 Ghuy Game 🐍</h2>
     <canvas id="game" width="400" height="400"></canvas><br />
     <button id="restartBtn" onclick="restartGame()">Chơi lại</button>
-    <button id="menuBtn" onclick="backToMenu()">Quay về menu</button>
+    <button id="menuBtn" onclick="returnToMenu()">Quay về menu</button>
   </div>
 
-  function startGame() {
-  // Phát âm thanh để vượt qua chặn của trình duyệt
-  eatSound.play().catch(() => {});
-  gameOverSound.play().catch(() => {});
-
-  menu.style.display = 'none';
-  gameDiv.style.display = 'block';
-  initGame();
-}
-
-<audio id="eatSound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-casino-notification-211.wav" preload="auto"></audio>
-<audio id="gameOverSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.wav" preload="auto"></audio>
-
+  <!-- Âm thanh mới -->
+  <audio id="eatSound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-casino-notification-211.wav" preload="auto"></audio>
+  <audio id="gameOverSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.wav" preload="auto"></audio>
 
   <script>
     const canvas = document.getElementById("game");
@@ -105,8 +83,6 @@
     let box = 20;
     let canvasSize = 400;
     let snake, direction, food, game, obstacles;
-    let score = 0;
-    let highScore = 0;
 
     const mapSettings = {
       default: { bg: "#111", obstacles: [] },
@@ -139,36 +115,26 @@
     };
 
     function startGame() {
+      // Kích âm thanh để trình duyệt cho phép
+      eatSound.play().catch(() => {});
+      gameOverSound.play().catch(() => {});
+
       menu.style.display = 'none';
       gameDiv.style.display = 'block';
       initGame();
     }
 
-    function backToMenu() {
-      gameDiv.style.display = 'none';
-      menu.style.display = 'block';
-    }
-
-    function updateScoreDisplay() {
-      document.getElementById("currentScore").innerText = `Điểm: ${score}`;
-    }
-
     function initGame() {
       snake = [{ x: 9 * box, y: 9 * box }];
       direction = "RIGHT";
-      const selectedMap = mapSelect.value;
-      const settings = mapSettings[selectedMap] || mapSettings.default;
+      const settings = mapSettings[mapSelect.value] || mapSettings.default;
       obstacles = settings.obstacles;
       ctx.canvas.style.backgroundColor = settings.bg;
       food = randomFood();
-      score = 0;
-      updateScoreDisplay();
-      highScore = localStorage.getItem(`highScore_${selectedMap}`) || 0;
-      document.getElementById("highScore").innerText = `Kỷ lục: ${highScore}`;
       restartBtn.style.display = "none";
       menuBtn.style.display = "none";
       if (game) clearInterval(game);
-      game = setInterval(drawGame, 250);
+      game = setInterval(drawGame, 250); // tốc độ chậm
     }
 
     function randomFood() {
@@ -205,12 +171,7 @@
 
       // Vẽ rắn
       for (let i = 0; i < snake.length; i++) {
-        if (i === 0) {
-          ctx.fillStyle = "#00ff00"; // đầu rắn
-        } else {
-          const greenShade = 255 - i * 10 > 50 ? 255 - i * 10 : 50;
-          ctx.fillStyle = `rgb(0,${greenShade},0)`; // thân rắn mờ dần
-        }
+        ctx.fillStyle = i === 0 ? "lime" : "green";
         ctx.fillRect(snake[i].x, snake[i].y, box, box);
         ctx.strokeStyle = "#003300";
         ctx.strokeRect(snake[i].x, snake[i].y, box, box);
@@ -229,18 +190,12 @@
 
       if (head.x === food.x && head.y === food.y) {
         eatSound.play();
-        score++;
-        updateScoreDisplay();
-        if (score > highScore) {
-          highScore = score;
-          localStorage.setItem(`highScore_${mapSelect.value}`, highScore);
-          document.getElementById("highScore").innerText = `Kỷ lục: ${highScore}`;
-        }
         food = randomFood();
       } else {
         snake.pop();
       }
 
+      // Va chạm tường, thân, chướng ngại vật
       if (
         head.x < 0 || head.y < 0 ||
         head.x >= canvasSize || head.y >= canvasSize ||
@@ -259,6 +214,11 @@
 
     function restartGame() {
       initGame();
+    }
+
+    function returnToMenu() {
+      gameDiv.style.display = 'none';
+      menu.style.display = 'block';
     }
   </script>
 </body>
