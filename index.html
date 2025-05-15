@@ -1,224 +1,266 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ghuy Game</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Game</title>
   <style>
     body {
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin: 0;
       padding: 0;
-      background: url('https://images.unsplash.com/photo-1600959907703-9c84efc539c6') no-repeat center center fixed;
-      background-size: cover;
-      font-family: Arial, sans-serif;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
     }
-    .game-container, .menu-container {
-      background: rgba(0, 0, 0, 0.85);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 20px #0f0;
-      text-align: center;
-      margin-bottom: 20px;
+    canvas {
+      margin-top: 20px;
+      border: 4px solid #4caf50;
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+      border-radius: 10px;
     }
-    h2 { color: #0f0; margin-bottom: 20px; }
-    button, select {
-      background-color: #0f0;
+    .menu, .auth {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.07);
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+    }
+    .menu select, .menu button, .auth input, .auth button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+      border-radius: 6px;
       border: none;
-      padding: 10px 20px;
-      margin: 10px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .menu select:hover, .menu button:hover, .auth button:hover {
+      background: #45a049;
+      transform: scale(1.05);
+    }
+    .auth input {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid #ccc;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    .controls button {
+      width: 60px;
+      height: 60px;
+      margin: 5px;
+      font-size: 18px;
+      background: #4caf50;
+      border: none;
       border-radius: 8px;
+      color: white;
       font-weight: bold;
       cursor: pointer;
     }
-    canvas {
-      border: 4px solid #0f0;
-      background-color: #111;
-      box-shadow: 0 0 20px rgba(0,255,0,0.5);
+    h1 {
+      text-shadow: 2px 2px 6px #000;
+      font-size: 2.5rem;
+      margin-top: 20px;
     }
-    #restartBtn, #menuBtn { display: none; }
+    .score {
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <!-- Menu chọn map -->
-  <div class="menu-container" id="menu">
-    <h2>Chọn bản đồ</h2>
-    <select id="mapSelect">
-      <option value="default">Mặc định</option>
-      <option value="forest">Rừng</option>
-      <option value="desert">Sa mạc</option>
-      <option value="night">Ban đêm</option>
-    </select><br />
-    <button onclick="startGame()">Bắt đầu chơi</button>
+  <h1>🐍 Snake Game</h1>
+
+  <div class="auth">
+    <input type="text" id="username" placeholder="Tên đăng nhập">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button onclick="register()">Tạo tài khoản</button>
   </div>
 
-  <!-- Game -->
-  <div class="game-container" id="gameSection" style="display: none">
-    <h2>🐍 Ghuy Game 🐍</h2>
-    <canvas id="game" width="400" height="400"></canvas><br />
-    <button id="restartBtn" onclick="restartGame()">Chơi lại</button>
-    <button id="menuBtn" onclick="returnToMenu()">Quay về menu</button>
+  <div class="menu">
+    <label>Chọn map:
+      <select id="mapSelect">
+        <option value="classic">Cổ điển</option>
+        <option value="desert">Sa mạc</option>
+        <option value="forest">Rừng xanh</option>
+      </select>
+    </label>
+    <label>Tốc độ:
+      <select id="speedSelect">
+        <option value="200">Chậm</option>
+        <option value="120">Trung bình</option>
+        <option value="60">Nhanh</option>
+      </select>
+    </label>
+    <button onclick="startGame()">Bắt đầu</button>
   </div>
 
-  <!-- Âm thanh mới -->
-  <audio id="eatSound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-casino-notification-211.wav" preload="auto"></audio>
-  <audio id="gameOverSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.wav" preload="auto"></audio>
+  <div class="score" id="scoreDisplay">Điểm: 0</div>
+
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+  <div class="controls">
+    <div>
+      <button onclick="setDirection('UP')">⬆️</button>
+    </div>
+    <div>
+      <button onclick="setDirection('LEFT')">⬅️</button>
+      <button onclick="setDirection('DOWN')">⬇️</button>
+      <button onclick="setDirection('RIGHT')">➡️</button>
+    </div>
+  </div>
 
   <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    const restartBtn = document.getElementById("restartBtn");
-    const menuBtn = document.getElementById("menuBtn");
-    const eatSound = document.getElementById("eatSound");
-    const gameOverSound = document.getElementById("gameOverSound");
-    const menu = document.getElementById("menu");
-    const gameDiv = document.getElementById("gameSection");
-    const mapSelect = document.getElementById("mapSelect");
+    let users = {};
 
-    let box = 20;
-    let canvasSize = 400;
-    let snake, direction, food, game, obstacles;
+    function register() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-    const mapSettings = {
-      default: { bg: "#111", obstacles: [] },
-      forest: {
-        bg: "#003300",
-        obstacles: [
-          { x: 5 * box, y: 5 * box },
-          { x: 6 * box, y: 5 * box },
-          { x: 7 * box, y: 5 * box },
-          { x: 10 * box, y: 10 * box },
-        ]
-      },
-      desert: {
-        bg: "#CCAA66",
-        obstacles: [
-          { x: 8 * box, y: 2 * box },
-          { x: 9 * box, y: 2 * box },
-          { x: 10 * box, y: 2 * box },
-          { x: 11 * box, y: 2 * box },
-        ]
-      },
-      night: {
-        bg: "#000022",
-        obstacles: [
-          { x: 3 * box, y: 12 * box },
-          { x: 4 * box, y: 12 * box },
-          { x: 5 * box, y: 12 * box },
-        ]
-      },
-    };
-
-    function startGame() {
-      // Kích âm thanh để trình duyệt cho phép
-      eatSound.play().catch(() => {});
-      gameOverSound.play().catch(() => {});
-
-      menu.style.display = 'none';
-      gameDiv.style.display = 'block';
-      initGame();
-    }
-
-    function initGame() {
-      snake = [{ x: 9 * box, y: 9 * box }];
-      direction = "RIGHT";
-      const settings = mapSettings[mapSelect.value] || mapSettings.default;
-      obstacles = settings.obstacles;
-      ctx.canvas.style.backgroundColor = settings.bg;
-      food = randomFood();
-      restartBtn.style.display = "none";
-      menuBtn.style.display = "none";
-      if (game) clearInterval(game);
-      game = setInterval(drawGame, 250); // tốc độ chậm
-    }
-
-    function randomFood() {
-      let pos;
-      do {
-        pos = {
-          x: Math.floor(Math.random() * (canvasSize / box)) * box,
-          y: Math.floor(Math.random() * (canvasSize / box)) * box
-        };
-      } while (
-        snake.some(part => part.x === pos.x && part.y === pos.y) ||
-        obstacles.some(ob => ob.x === pos.x && ob.y === pos.y)
-      );
-      return pos;
-    }
-
-    document.addEventListener("keydown", changeDirection);
-
-    function changeDirection(e) {
-      if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-      else if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-      else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-      else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-    }
-
-    function drawGame() {
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-      // Vẽ chướng ngại vật
-      ctx.fillStyle = "gray";
-      obstacles.forEach(ob => {
-        ctx.fillRect(ob.x, ob.y, box, box);
-      });
-
-      // Vẽ rắn
-      for (let i = 0; i < snake.length; i++) {
-        ctx.fillStyle = i === 0 ? "lime" : "green";
-        ctx.fillRect(snake[i].x, snake[i].y, box, box);
-        ctx.strokeStyle = "#003300";
-        ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+      if (!username || !password) {
+        alert("Vui lòng nhập tên đăng nhập và mật khẩu.");
+        return;
       }
 
-      // Vẽ thức ăn
-      ctx.fillStyle = "red";
-      ctx.fillRect(food.x, food.y, box, box);
+      if (users[username]) {
+        alert("Tài khoản đã tồn tại.");
+        return;
+      }
 
-      // Di chuyển
-      let head = { x: snake[0].x, y: snake[0].y };
-      if (direction === "LEFT") head.x -= box;
-      if (direction === "UP") head.y -= box;
-      if (direction === "RIGHT") head.x += box;
-      if (direction === "DOWN") head.y += box;
+      users[username] = password;
+      alert("Tạo tài khoản thành công! Bạn có thể bắt đầu chơi.");
+    }
 
-      if (head.x === food.x && head.y === food.y) {
-        eatSound.play();
-        food = randomFood();
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    let speed = 200;
+    let direction = "RIGHT";
+    let snake = [{x: 10, y: 10}];
+    let apple = {x: 15, y: 15};
+    let gridSize = 20;
+    let interval;
+    let score = 0;
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+      else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+      else if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+      else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    });
+
+    function setDirection(dir) {
+      if (dir === "UP" && direction !== "DOWN") direction = "UP";
+      else if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
+      else if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
+      else if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
+    }
+
+    function draw() {
+      const patternCanvas = document.createElement('canvas');
+      const pctx = patternCanvas.getContext('2d');
+      patternCanvas.width = patternCanvas.height = 40;
+      pctx.fillStyle = "#1e1e1e";
+      pctx.fillRect(0, 0, 40, 40);
+      pctx.fillStyle = "#292929";
+      pctx.fillRect(0, 0, 20, 20);
+      pctx.fillRect(20, 20, 20, 20);
+      const pattern = ctx.createPattern(patternCanvas, 'repeat');
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#e74c3c";
+      ctx.beginPath();
+      ctx.arc(apple.x * gridSize + gridSize / 2, apple.y * gridSize + gridSize / 2, gridSize / 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#7CFC00";
+      snake.forEach(part => {
+        ctx.beginPath();
+        ctx.roundRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize, 5);
+        ctx.fill();
+      });
+    }
+
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+      this.beginPath();
+      this.moveTo(x + radius, y);
+      this.lineTo(x + width - radius, y);
+      this.quadraticCurveTo(x + width, y, x + width, y + radius);
+      this.lineTo(x + width, y + height - radius);
+      this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      this.lineTo(x + radius, y + height);
+      this.quadraticCurveTo(x, y + height, x, y + height - radius);
+      this.lineTo(x, y + radius);
+      this.quadraticCurveTo(x, y, x + radius, y);
+      this.closePath();
+    }
+
+    function update() {
+      const head = { ...snake[0] };
+      if (direction === "UP") head.y--;
+      else if (direction === "DOWN") head.y++;
+      else if (direction === "LEFT") head.x--;
+      else if (direction === "RIGHT") head.x++;
+
+      snake.unshift(head);
+
+      if (head.x === apple.x && head.y === apple.y) {
+        apple = {
+          x: Math.floor(Math.random() * (canvas.width / gridSize)),
+          y: Math.floor(Math.random() * (canvas.height / gridSize))
+        };
+        score += 10;
+        scoreDisplay.textContent = `Điểm: ${score}`;
       } else {
         snake.pop();
       }
 
-      // Va chạm tường, thân, chướng ngại vật
       if (
         head.x < 0 || head.y < 0 ||
-        head.x >= canvasSize || head.y >= canvasSize ||
-        snake.some(part => part.x === head.x && part.y === head.y) ||
-        obstacles.some(ob => ob.x === head.x && ob.y === head.y)
+        head.x >= canvas.width / gridSize ||
+        head.y >= canvas.height / gridSize ||
+        snake.slice(1).some(p => p.x === head.x && p.y === head.y)
       ) {
-        clearInterval(game);
-        gameOverSound.play();
-        restartBtn.style.display = "inline-block";
-        menuBtn.style.display = "inline-block";
-        return;
+        clearInterval(interval);
+        alert(`Game Over!\nTổng điểm: ${score}`);
       }
-
-      snake.unshift(head);
     }
 
-    function restartGame() {
-      initGame();
+    function gameLoop() {
+      update();
+      draw();
     }
 
-    function returnToMenu() {
-      gameDiv.style.display = 'none';
-      menu.style.display = 'block';
+    function startGame() {
+      clearInterval(interval);
+      speed = parseInt(document.getElementById("speedSelect").value);
+      const map = document.getElementById("mapSelect").value;
+      applyMapTheme(map);
+      direction = "RIGHT";
+      snake = [{x: 10, y: 10}];
+      apple = {x: 15, y: 15};
+      score = 0;
+      scoreDisplay.textContent = "Điểm: 0";
+      interval = setInterval(gameLoop, speed);
+    }
+
+    function applyMapTheme(map) {
+      if (map === "classic") {
+        canvas.style.borderColor = "#4caf50";
+      } else if (map === "desert") {
+        canvas.style.borderColor = "#d2b48c";
+      } else if (map === "forest") {
+        canvas.style.borderColor = "#228B22";
+      }
     }
   </script>
 </body>
